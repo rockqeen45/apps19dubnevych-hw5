@@ -6,6 +6,7 @@ import java.util.*;
 
 public class AsIntStream implements IntStream {
     private List<Integer> values;
+    private List<Integer> buffer;
     private Queue<Operation> operations;
 
     private Queue<IntUnaryOperator> mappers;
@@ -34,10 +35,10 @@ public class AsIntStream implements IntStream {
         executeOperations();
         validate();
         double sum = 0.0;
-        for (int value: values) {
+        for (int value: buffer) {
             sum += value;
         }
-        return sum / values.size();
+        return sum / buffer.size();
     }
 
     @Override
@@ -45,7 +46,7 @@ public class AsIntStream implements IntStream {
         executeOperations();
         validate();
         int max = Integer.MIN_VALUE;
-        for (int value: values) {
+        for (int value: buffer) {
             if (value > max) {
                 max = value;
             }
@@ -58,7 +59,7 @@ public class AsIntStream implements IntStream {
         executeOperations();
         validate();
         int min = Integer.MAX_VALUE;
-        for (int value: values) {
+        for (int value: buffer) {
             if (value < min) {
                 min = value;
             }
@@ -70,7 +71,7 @@ public class AsIntStream implements IntStream {
     public long count() {
         executeOperations();
         validate();
-        return values.size();
+        return buffer.size();
     }
 
     @Override
@@ -78,7 +79,7 @@ public class AsIntStream implements IntStream {
         executeOperations();
         validate();
         int sum = 0;
-        for (int value: values) {
+        for (int value: buffer) {
             sum += value;
         }
         return sum;
@@ -94,7 +95,7 @@ public class AsIntStream implements IntStream {
     @Override
     public void forEach(IntConsumer action) {
         executeOperations();
-        for (int value: values) {
+        for (int value: buffer) {
             action.accept(value);
         }
     }
@@ -117,7 +118,7 @@ public class AsIntStream implements IntStream {
     public int reduce(int identity, IntBinaryOperator op) {
         executeOperations();
         int sum = identity;
-        for (int value: values) {
+        for (int value: buffer) {
             sum = op.apply(sum, value);
         }
         return sum;
@@ -126,43 +127,45 @@ public class AsIntStream implements IntStream {
     @Override
     public int[] toArray() {
         executeOperations();
-        int[] result = new int[values.size()];
-        for (int i = 0; i < values.size(); i++) {
-            result[i] = values.get(i);
+        int[] result = new int[buffer.size()];
+        for (int i = 0; i < buffer.size(); i++) {
+            result[i] = buffer.get(i);
         }
+        buffer = null;
         return result;
     }
 
 
     private void executeMap(IntUnaryOperator mapper) {
         List<Integer> result = new LinkedList<>();
-        for (int value: values) {
+        for (int value: buffer) {
             int mappedValue = mapper.apply(value);
             result.add(mappedValue);
         }
-        this.values = result;
+        this.buffer = result;
     }
 
     private void executeFlatMap(IntToIntStreamFunction func) {
         List<Integer> result = new LinkedList<>();
-        for (int value: values) {
+        for (int value: buffer) {
             AsIntStream stream = (AsIntStream) func.applyAsIntStream(value);
             result.addAll(stream.values);
         }
-        this.values = result;
+        this.buffer = result;
     }
 
     private void executeFilter(IntPredicate predicate) {
         List<Integer> filteredValues = new LinkedList<>();
-        for (int value: values) {
+        for (int value: buffer) {
             if (predicate.test(value)) {
                 filteredValues.add(value);
             }
         }
-        this.values = filteredValues;
+        this.buffer = filteredValues;
     }
 
     private void executeOperations() {
+        buffer = new LinkedList<>(values);
         while (!operations.isEmpty()) {
             Operation operation = operations.remove();
             if (operation == Operation.FILTER) {
@@ -176,7 +179,7 @@ public class AsIntStream implements IntStream {
     }
 
     private void validate() {
-        if (values.isEmpty()) {
+        if (buffer.isEmpty()) {
             throw new IllegalArgumentException("Stream is empty");
         }
     }
