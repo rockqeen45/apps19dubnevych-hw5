@@ -33,7 +33,7 @@ public class AsIntStream implements IntStream {
     public Double average() {
         executeOperations();
         validate();
-        double sum = 0;
+        Double sum = 0.0;
         for (int value: values) {
             sum += value;
         }
@@ -44,7 +44,7 @@ public class AsIntStream implements IntStream {
     public Integer max() {
         executeOperations();
         validate();
-        int max = Integer.MIN_VALUE;
+        Integer max = Integer.MIN_VALUE;
         for (int value: values) {
             if (value > max) {
                 max = value;
@@ -57,7 +57,7 @@ public class AsIntStream implements IntStream {
     public Integer min() {
         executeOperations();
         validate();
-        int min = Integer.MAX_VALUE;
+        Integer min = Integer.MAX_VALUE;
         for (int value: values) {
             if (value < min) {
                 min = value;
@@ -77,7 +77,7 @@ public class AsIntStream implements IntStream {
     public Integer sum() {
         executeOperations();
         validate();
-        int sum = 0;
+        Integer sum = 0;
         for (int value: values) {
             sum += value;
         }
